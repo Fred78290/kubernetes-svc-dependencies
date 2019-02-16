@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	flags "github.com/jessevdk/go-flags"
+	"github.com/jessevdk/go-flags"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	restclient "k8s.io/client-go/rest"
