@@ -1,0 +1,79 @@
+{
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+        "name": "helloworld",
+        "namespace": "kube-public",
+        "labels": {
+            "app": "helloworld"
+        }
+    },
+    "spec": {
+        "replicas": 1,
+        "selector": {
+            "matchLabels": {
+                "app": "helloworld"
+            }
+        },
+        "template": {
+            "metadata": {
+                "labels": {
+                    "app": "helloworld"
+                }
+            },
+            "spec": {
+                "restartPolicy": "Always",
+                "terminationGracePeriodSeconds": 30,
+                "securityContext": {},
+                "schedulerName": "default-scheduler",
+                "initContainers": [
+                    {
+                        "image": "fred78290/kubernetes-svc-dependencies:v1.13.3",
+                        "command": [
+                            "/usr/local/bin/check-dependencies"
+                        ],
+                        "args": [
+                            "-v",
+                            "--namespace=kube-public",
+                            "--kubeconfig=/etc/kubernetes/config",
+                            "--maxretry=5",
+                            "--sleep=15",
+                            "--timeout=300",
+                            "svc/kube-public:mongodb"
+                        ],
+                        "name": "helloworld-init",
+                        "volumeMounts": [
+                            {
+                                "name": "kubeconfig",
+                                "mountPath": "/etc/kubernetes/config",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "containers": [
+                    {
+                        "name": "helloworld",
+                        "image": "gcr.io/hello-minikube-zero-install/hello-node",
+                        "imagePullPolicy": "IfNotPresent",
+                        "ports": [
+                            {
+                                "containerPort": 8080,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kubeconfig",
+                        "hostPath": {
+                            "path": "/etc/kubernetes/admin.conf",
+                            "type": "File"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

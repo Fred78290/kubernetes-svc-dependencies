@@ -1,0 +1,4 @@
+vendor/
+debug
+kubernetes-svc-dependencies
+out/
