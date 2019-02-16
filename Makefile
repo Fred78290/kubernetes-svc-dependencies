@@ -25,6 +25,7 @@ else
 endif
 
 deps:
+	go get -u github.com/kardianos/govendor
 	govendor fetch +external
 
 build:

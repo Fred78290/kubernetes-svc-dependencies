@@ -1,19 +1,7 @@
 {
 	"comment": "",
-	"ignore": "test",
+	"ignore": "test appengine",
 	"package": [
-		{
-			"path": "appengine",
-			"revision": ""
-		},
-		{
-			"path": "appengine_internal",
-			"revision": ""
-		},
-		{
-			"path": "appengine_internal/base",
-			"revision": ""
-		},
 		{
 			"checksumSHA1": "CSPbwbyzqA6sfORicn4HFtIhF/c=",
 			"path": "github.com/davecgh/go-spew/spew",
@@ -214,7 +202,7 @@
 			"revisionTime": "2019-02-12T00:33:33Z"
 		},
 		{
-			"checksumSHA1": "9BtVnyPpVQdhVSW78CNUR+iJmK4=",
+			"checksumSHA1": "BmWkzXZZ0HbrEM5DsCB51fxzu5s=",
 			"path": "golang.org/x/oauth2/internal",
 			"revision": "3e8b2be1363542a95c52ea0796d4a40dacfb5b95",
 			"revisionTime": "2019-02-12T00:33:33Z"
