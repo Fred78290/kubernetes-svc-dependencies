@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/golang/oauth2.svg?branch=master)](https://travis-ci.org/golang/oauth2)
+[![Build Status](https://travis-ci.org/Fred78290/kubernetes-svc-dependencies.svg?branch=master)](https://travis-ci.org/Fred78290/kubernetes-svc-dependencies)
 
 # Kubernetes service dependencies ready checker #
 
