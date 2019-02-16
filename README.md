@@ -65,15 +65,15 @@ When you create kubernetes resources, just add an init container belong to your 
 
 | Name | Description |
 | --- | --- |
-| `-n | --namespace` | Default namespace |
-| `-k | --kubeconfig` | Kubeconfig file  |
-| `-a | --apiserver` | apiserver host  |
-| `-r | --maxretry` | The number of retry before a dependency is considered as unready  |
-| `-b | --keeponerror` | Try always to reach the dependency else the process exit  |
-| `-i | --ignoreerror` | Ignore error  |
-| `-v | --verbose` | Verbose  |
-| `-s | --sleep` | Time interval in `time.Duration` unit  |
-| `-t | --timeout` | Time to wait before to declare service down in `time.Duration` unit  |
+| `-n \| --namespace` | Default namespace |
+| `-k \| --kubeconfig` | Kubeconfig file  |
+| `-a \| --apiserver` | apiserver host  |
+| `-r \| --maxretry` | The number of retry before a dependency is considered as unready  |
+| `-b \| --keeponerror` | Try always to reach the dependency else the process exit  |
+| `-i \| --ignoreerror` | Ignore error  |
+| `-v \| --verbose` | Verbose  |
+| `-s \| --sleep` | Time interval in `time.Duration` unit  |
+| `-t \| --timeout` | Time to wait before to declare service down in `time.Duration` unit  |
 | `dependencies` | Enumeration of dependencies |
 
 ### Syntax to enumerate dependencies ###
