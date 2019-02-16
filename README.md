@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/golang/oauth2.svg?branch=master)](https://travis-ci.org/golang/oauth2)
+
 # Kubernetes service dependencies ready checker #
 
 when you create resources in kubernetes often yours containers failed to start because they need somes already running resources before starting. For example you deploy a php website and it must connect to a MySQL server. With kubernetes service dependencies embeded in the deployment, the container doesn't start until his all dependencies are ready
