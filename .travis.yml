@@ -1,6 +1,4 @@
-language: go
-go:
-  - 1.11.x
+language: minimal
 services:
   - docker
 before_install:
