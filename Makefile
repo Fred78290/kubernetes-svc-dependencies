@@ -25,17 +25,16 @@ else
 endif
 
 deps:
-	go get -u github.com/kardianos/govendor
 	govendor fetch +external
 
-build:
+build: 
 	$(ENVVAR) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-X main.phVersion=$(VERSION) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$(GOOS)-$(GOARCH) ${TAGS_FLAG}
 
 make-image:
 	docker build --pull --build-arg BASEIMAGE=${BASEIMAGE} \
 	    -t ${REGISTRY}/kubernetes-svc-dependencies${PROVIDER}:${TAG} .
 
-build-binary: clean
+build-binary: clean deps
 	make -e GOOS=linux -e GOARCH=amd64 build
 	make -e GOOS=darwin -e GOARCH=amd64 build
 
@@ -63,7 +62,7 @@ build-in-docker: docker-builder
 release: build-in-docker execute-release
 	@echo "Full in-docker release ${TAG}${FOR_PROVIDER} completed"
 
-container: clean deps build-in-docker make-image
+container: clean build-in-docker make-image
 	@echo "Created in-docker image ${TAG}${FOR_PROVIDER}"
 
 test-in-docker: clean docker-builder
