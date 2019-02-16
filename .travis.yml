@@ -1,0 +1,21 @@
+language: go
+go:
+  - 1.10.x
+  - 1.11.x
+services:
+  - docker
+before_install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+install:
+  - docker push fred78290/kubernetes-svc-dependencies:v1.13.3
+before_deploy:
+  - make -e REGISTRY=fred78290 -e TAG=v1.13.3 container
+deploy:
+  provider: releases
+  api_key: $GITHUB_OAUTH_TOKEN
+  on:
+    tags: true
+    repo: Fred78290/kubernetes-svc-dependencies
+  file:
+  - out/kubernetes-svc-dependencies-darwin-amd64
+  - out/kubernetes-svc-dependencies-linux-amd64
