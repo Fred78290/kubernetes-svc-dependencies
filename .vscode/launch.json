@@ -50,7 +50,7 @@
                 "--maxretry=2",
                 "--sleep=10s",
                 "--timeout=1m",
-                "deploy/kube-system:kubernetes-small-esxi-logging-kibana"
+                "svc/kube-system:kubernetes-dashboard"
             ],
             "showLog": true
         }
