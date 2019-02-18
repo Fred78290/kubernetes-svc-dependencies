@@ -25,7 +25,7 @@ else
 endif
 
 deps:
-	govendor fetch +missing
+	govendor fetch -v +external +missing
 
 build: 
 	$(ENVVAR) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-X main.phVersion=$(VERSION) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$(GOOS)-$(GOARCH) ${TAGS_FLAG}
