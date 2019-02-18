@@ -17,14 +17,13 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/jessevdk/go-flags"
+	flags "github.com/jessevdk/go-flags"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	restclient "k8s.io/client-go/rest"
@@ -133,7 +132,7 @@ func (t *Dependency) ready(client *clientset.Clientset, verbose bool) (bool, err
 
 	options := metav1.GetOptions{}
 
-	if t._retry >= 0 {
+	if t._retry > 0 {
 		if t._kind == "po" {
 
 			if pod, err := client.Core().Pods(t._namespace).Get(t._name, options); err != nil {
@@ -230,7 +229,7 @@ func (t *Dependency) ready(client *clientset.Clientset, verbose bool) (bool, err
 		}
 	}
 
-	return false, nil
+	return false, fmt.Errorf("Max retries reached for %v", t)
 }
 
 func (t *Dependency) retry() int {
@@ -458,8 +457,6 @@ func mainExitCode(arguments []string) int {
 
 func main() {
 	arguments := os.Args[1:]
-
-	flag.CommandLine.Parse([]string{"-logtostderr=true"})
 
 	os.Exit(mainExitCode(arguments))
 }

@@ -1,0 +1,58 @@
+{
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "remotePath": "",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "program": "${workspaceFolder}",
+            "env": {},
+            "args": [
+                "-v",
+                "-k",
+                "/Users/fboltz/.kube/config",
+                "--namespace=smartnews",
+                "--maxretry=2",
+                "--sleep=10s",
+                "--timeout=1m",
+                "--keeponerror",
+                "svc/smartnews:minikube-eureka",
+                "svc/smartnews:minikube-statistics",
+                "svc/smartnews:minikube-mongodb-index",
+                "svc/smartnews:minikube-mongodb-auth",
+                "svc/smartnews:minikube-ldap",
+                "svc/smartnews:minikube-elasticsearch"
+            ],
+            "showLog": true
+        },
+        {
+            "name": "Kube",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "remotePath": "",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "program": "${workspaceFolder}",
+            "env": {},
+            "args": [
+                "-v",
+                "-k",
+                "/Users/fboltz/.kube/config",
+                "--namespace=smartnews",
+                "--maxretry=2",
+                "--sleep=10s",
+                "--timeout=1m",
+                "deploy/kube-system:kubernetes-small-esxi-logging-kibana"
+            ],
+            "showLog": true
+        }
+    ]
+}
