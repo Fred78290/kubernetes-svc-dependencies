@@ -5,12 +5,13 @@ addons:
   sonarcloud:
     organization: fred78290-github
     token:
-      secure: secure: "dPYS5slIohJOBAyVJRZSr8PN9vxIVkwlttdJ+bepMGBvXDTNJ6e/Q5TcM6mIfQS93pM271KN6H5riSRae37OHpilM+0oO8ZQIuOXLYAQ3+gsmcijfjnFYCNql0JEwBBSpbBT6om/JygZjSS79IfsTNUX2z/z5TBKFQrpigwrFbr5qOnI26wyPb958MbazZlPU3rsGmBVp/5suDRpX+wa2uEAMJpyhmqtZxHmPJg/nGRawCz52+vIjpcwRJ0/2N+YkTNXQsnNP+i3bRsWU+fLWAli3mPRZKyQg9WyKmEeh3S8VUUs7GrmHnH0z7zED8YulHhfJR9aaJS9DOoVN5FTVY3dD/X3SjxfYDsB4g+VlCSq3TXcqMVcaK8cS58afi/RLTnTphr6vXiZxYR9JH2nN7+w7VduYSgG82dY2W8CHRvZRzrx3Z5OFf4zj4tOxpswka/xH7x8vagu1eJbAbXgOK3FgW+No0IdMrJPfaJdSblQPyVlcl6KrbDw5+djIXQQqntV04LeCOArZZ36oLHZqg4rb6I1qGTuLJaQIfkFLGjzZYP0qxV8oVOmCwYfQ6nUbYmPnGWBQHto4jAqqt2+UubktH/3Er5FmQKIJgPPvVqoHcQ5wbiqXEmrDakLZc/zTtEn1McipXvokoqyt0jAcItjkB35UYcTTIe6Ckp+3fo="
+      secure: "OvlXt0mQsBp4qaCT2xdNzyi2lGX/xbuQPu4qK5uTE9eRuo0BOEO/gSl09nX6TQO/zasvx83WU/aeo1RTvjWY0MfQF2WbXlfhXxSNyPQKrP6s0Wpi4HkmUWEkuyHa7u+st/vM4y4+jtWEolhphtfZ3fb8kpYjzhY0FyZZOzoTNn3m8yfowEc4Gthl0Vydk3UNUWdjSy6AsMYtBM6UQofauJtH1/vURXCF/GPKHBwPilLXbvr9B5JbjPP33pTadr8VIPcA29GDR5c0zHZWIgCZFHG5ndPEjNR/HJ2qwOrs1UykiscgpQupbDtRbKEugkIneqLehjiw3e74OZ0vuZOr2vH+H/zRKGMOwX5slfvthC7M/ynwXl4uFNhyEsha/E87r4RRrbFbCHqEGsDaHbii702TI1z1oh/u1gkkipqx1sw6KiVvML4sz/8IxdX4OmTDs3/RhwxioCQYTk/558xlbXr8T6CR5xjEglX6vYLhSSVY+czEfbgLmd3SdSOAelBxuIT/d7gOamoGz/ul4walf2bQ1PFj8ps3zzSSEn+nVH2jYnpwHiSCRvwk2HqY7nwgXjA8FslRehMaGWu9Ic+dO1ZRZvrkF9a7raUKYW4mdHxjKx4HlkK81kRbkm3mpc0ZMOZNSCKzYtPwiP5vPlm2m+IePGgympB9wRFl03MT45g="
 script:
 - sonar-scanner
 cache:
   directories:
-  - "$HOME/.sonar/cache"
+  - $HOME/.sonar/cache
+  - vendor
 before_install:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 install:
@@ -26,6 +27,3 @@ deploy:
   file:
   - out/kubernetes-svc-dependencies-darwin-amd64
   - out/kubernetes-svc-dependencies-linux-amd64
-env:
-  global:
-    secure: mWZbCSBvjyf3sOCahZXLbHTZOXmyO2MPyYk9KREIcFmGLqcf/BIQ8I+Up1WHtSNaS7Y5RMMUoc8yp+9JtcwDxVYkASJv2Z6deaz0CJ9q3DWF+emJJcRthBZAtqchiUEve0jMbVwrZmTmlCduqElGZ4sk8mbv1jVfgXa1Sllt9zohb6zrQY/P8SX4BhcDDRlfp3HgKDpUQZfcvas/6XG3RKPEg6d5sZkZj7WFSk0JTv5XqTORYrXIeD/JE+KltOVPDyYFA2p6aWcWh8mV8ySOHVHxFuQ/Uce6DtX8p/uLbKqlnamDtlJt2JZ+UBfpq6YgZr45E6vs1D3/fmWY9cDyjaU7IMlvaPSbAwNyiYzAUmhb1hlIiSwZKTQlb7L2dFBpiz4ASvO97MF7uz/URqLyyLlEQahw69WPTrb0J64/S250T9nXyc/Pd2AXu+z9WrXCHlIUJafrc0XDg3nLtALjFwhroTW9eR2QrSbO3ut8y5YjwsR0LEZoG8cEKe8qzKRi/yw8ui766dwP/4jrViBHD6MVe+wDBgI4usBO/EjX2CbOM19flmja9pmeG3I/xPh50llrupUsXkSitnc8C72qcnN55NzyU5/gn6GX1OPwW8I+OgBcIoXly0CdC3ENxta9KrDYMdwGaoCxwprRs1N3GlgDM+a3kV8lQfbETmD2yog=
