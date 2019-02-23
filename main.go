@@ -18,7 +18,6 @@ package main
 
 import (
 	"os"
-	"strconv"
 	"time"
 
 	flags "github.com/jessevdk/go-flags"
@@ -29,20 +28,6 @@ import (
 	"k8s.io/klog"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 )
-
-// Options arguments
-type Options struct {
-	Namespace   string                          `short:"n" long:"namespace" description:"Default namespace"`
-	Kubeconfig  string                          `short:"k" long:"kubeconfig" description:"Kubeconfig file"`
-	Apiserver   string                          `short:"a" long:"apiserver" description:"apiserver host"`
-	MaxRetry    string                          `short:"r" long:"maxretry" description:"[always|The number of retry before a depency is considered as unready]"`
-	KeepOnError bool                            `short:"b" long:"keeponerror" description:"Try always to reach the dependency"`
-	IgnoreError bool                            `short:"i" long:"ignoreerror" description:"Ignore error"`
-	Verbose     bool                            `short:"v" long:"verbose" description:"Verbose"`
-	Sleep       string                          `short:"s" long:"sleep" description:"Time interval in time.Duration unit"`
-	Timeout     string                          `short:"t" long:"timeout" description:"Time to wait before to declare service down in time.Duration unit"`
-	Dep         struct{ Dependencies []string } `positional-args:"yes" required:"1" positional-arg-name:"dependency" description:"Enumeration of dependency service"`
-}
 
 var phVersion = "v0.0.0-unset"
 var phBuildDate = ""
@@ -59,7 +44,7 @@ const MaxInt = int(MaxUint >> 1)
 // MinInt MinInt
 const MinInt = -MaxInt - 1
 
-var namespace string
+var namespace = metav1.NamespaceSystem
 
 func buildConfigFromEnvs(masterURL, kubeconfigPath string) (*restclient.Config, error) {
 	if kubeconfigPath == "" && masterURL == "" {
@@ -78,15 +63,14 @@ func buildConfigFromEnvs(masterURL, kubeconfigPath string) (*restclient.Config, 
 
 func mainExitCode(arguments []string) int {
 
-	var args Options
-	var maxRetry int
-
-	args.MaxRetry = "always"
-	args.IgnoreError = false
-	args.Sleep = "10s"
-	args.Timeout = "300s"
-
 	klog.Infof("Start kubernetes dependencies version:%v, build at:%v", phVersion, phBuildDate)
+
+	args := Options{
+		MaxRetry:    "always",
+		IgnoreError: false,
+		Sleep:       "10s",
+		Timeout:     "300s",
+	}
 
 	_, err := flags.ParseArgs(&args, arguments)
 
@@ -94,58 +78,40 @@ func mainExitCode(arguments []string) int {
 		if err.(*flags.Error).Type == flags.ErrHelp {
 			return 0
 		}
-	}
 
-	if err != nil {
 		klog.Errorf("Failed %v", err)
+
 		return -1
 	}
 
 	cc, err := buildConfigFromEnvs(args.Apiserver, args.Kubeconfig)
+
 	if err != nil {
-		klog.Fatalf("Failed to make client: %v", err)
+		klog.Errorf("Failed to make client: %v", err)
 	}
+
 	client, err := clientset.NewForConfig(cc)
 
 	if err != nil {
-		klog.Fatalf("Failed to make client: %v", err)
+		klog.Errorf("Failed to make client: %v", err)
+		return -1
 	}
 
-	if args.MaxRetry == "always" {
-		maxRetry = MaxInt
-	} else if args.MaxRetry == "" {
-		maxRetry = 1
-	} else {
-		maxRetry, err = strconv.Atoi(args.MaxRetry)
-		if err != nil {
-			klog.Errorf("Unable to parse maxretry value:%v", args.MaxRetry)
+	maxRetry := args.getMaxRetry()
+	timeout := args.getTimeout()
+	sleep := args.getSleepTime()
+
+	if args.Namespace != "" {
+		if _, err := client.Core().Namespaces().Get(args.Namespace, metav1.GetOptions{}); err != nil {
+			klog.Errorf("%s namespace doesn't exist: %v", args.Namespace, err)
 			return -1
 		}
-	}
 
-	timeout, err := time.ParseDuration(args.Timeout)
-	if err != nil {
-		klog.Errorf("Unable to parse timeout value:%v", args.Timeout)
-		return -1
-	}
-
-	sleep, err := time.ParseDuration(args.Sleep)
-	if err != nil {
-		klog.Errorf("Unable to parse sleep value:%v", args.Sleep)
-		return -1
-	}
-
-	namespace = metav1.NamespaceSystem
-	envNamespace := args.Namespace
-
-	if envNamespace != "" {
-		if _, err := client.Core().Namespaces().Get(envNamespace, metav1.GetOptions{}); err != nil {
-			klog.Fatalf("%s namespace doesn't exist: %v", envNamespace, err)
-		}
-		namespace = envNamespace
+		namespace = args.Namespace
 	}
 
 	dependencies := makeDependencyList(maxRetry, args.Dep.Dependencies, args.IgnoreError)
+
 	var ready bool
 
 	dependencies.isValid(client)
@@ -155,7 +121,7 @@ func mainExitCode(arguments []string) int {
 	for t := time.Now(); time.Since(t) < timeout; time.Sleep(sleep) {
 		ready, err = dependencies.ready(client, args.IgnoreError, args.KeepOnError, args.Verbose)
 
-		if err != nil && args.IgnoreError == false {
+		if err != nil && !args.IgnoreError {
 			klog.Errorf("Failed to got ready: %v", err)
 			return -1
 		}
@@ -165,7 +131,7 @@ func mainExitCode(arguments []string) int {
 		}
 	}
 
-	if ready == false {
+	if !ready {
 		klog.Errorf("Failed to got ready dependencies: %v", dependencies.dependencies)
 
 		return -1

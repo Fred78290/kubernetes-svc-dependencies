@@ -107,7 +107,7 @@ func (t *Dependency) podReady(pod *core.Pod, verbose bool) (bool, error) {
 	return numOfContainer == numOfReady && ready, nil
 }
 
-func (t *Dependency) isPoReady(client *clientset.Clientset, verbose bool) (bool, error) {
+func (t *Dependency) isPodReady(client *clientset.Clientset, verbose bool) (bool, error) {
 	if pod, err := client.Core().Pods(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	} else if pod == nil {
@@ -224,7 +224,7 @@ func (t *Dependency) ready(client *clientset.Clientset, verbose bool) (bool, err
 	if t._retry > 0 {
 		switch t._kind {
 		case "po":
-			return t.isPoReady(client, verbose)
+			return t.isPodReady(client, verbose)
 		case "deploy":
 			return t.isDeploymentReady(client, verbose)
 		case "ds":
