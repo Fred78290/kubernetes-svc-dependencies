@@ -1,18 +1,31 @@
 language: minimal
 services:
-  - docker
+- docker
+addons:
+  sonarcloud:
+    organization: fred78290-github
+    token:
+      secure: secure: "dPYS5slIohJOBAyVJRZSr8PN9vxIVkwlttdJ+bepMGBvXDTNJ6e/Q5TcM6mIfQS93pM271KN6H5riSRae37OHpilM+0oO8ZQIuOXLYAQ3+gsmcijfjnFYCNql0JEwBBSpbBT6om/JygZjSS79IfsTNUX2z/z5TBKFQrpigwrFbr5qOnI26wyPb958MbazZlPU3rsGmBVp/5suDRpX+wa2uEAMJpyhmqtZxHmPJg/nGRawCz52+vIjpcwRJ0/2N+YkTNXQsnNP+i3bRsWU+fLWAli3mPRZKyQg9WyKmEeh3S8VUUs7GrmHnH0z7zED8YulHhfJR9aaJS9DOoVN5FTVY3dD/X3SjxfYDsB4g+VlCSq3TXcqMVcaK8cS58afi/RLTnTphr6vXiZxYR9JH2nN7+w7VduYSgG82dY2W8CHRvZRzrx3Z5OFf4zj4tOxpswka/xH7x8vagu1eJbAbXgOK3FgW+No0IdMrJPfaJdSblQPyVlcl6KrbDw5+djIXQQqntV04LeCOArZZ36oLHZqg4rb6I1qGTuLJaQIfkFLGjzZYP0qxV8oVOmCwYfQ6nUbYmPnGWBQHto4jAqqt2+UubktH/3Er5FmQKIJgPPvVqoHcQ5wbiqXEmrDakLZc/zTtEn1McipXvokoqyt0jAcItjkB35UYcTTIe6Ckp+3fo="
+script:
+- sonar-scanner
+cache:
+  directories:
+  - "$HOME/.sonar/cache"
 before_install:
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 install:
-  - make -e REGISTRY=fred78290 -e TAG=$TRAVIS_TAG container
+- make -e REGISTRY=fred78290 -e TAG=$TRAVIS_TAG container
 after_deploy:
-  - docker push fred78290/kubernetes-svc-dependencies:$TRAVIS_TAG
+- docker push fred78290/kubernetes-svc-dependencies:$TRAVIS_TAG
 deploy:
   provider: releases
-  api_key: $GITHUB_OAUTH_TOKEN
+  api_key: "$GITHUB_OAUTH_TOKEN"
   on:
     tags: true
     repo: Fred78290/kubernetes-svc-dependencies
   file:
   - out/kubernetes-svc-dependencies-darwin-amd64
   - out/kubernetes-svc-dependencies-linux-amd64
+env:
+  global:
+    secure: mWZbCSBvjyf3sOCahZXLbHTZOXmyO2MPyYk9KREIcFmGLqcf/BIQ8I+Up1WHtSNaS7Y5RMMUoc8yp+9JtcwDxVYkASJv2Z6deaz0CJ9q3DWF+emJJcRthBZAtqchiUEve0jMbVwrZmTmlCduqElGZ4sk8mbv1jVfgXa1Sllt9zohb6zrQY/P8SX4BhcDDRlfp3HgKDpUQZfcvas/6XG3RKPEg6d5sZkZj7WFSk0JTv5XqTORYrXIeD/JE+KltOVPDyYFA2p6aWcWh8mV8ySOHVHxFuQ/Uce6DtX8p/uLbKqlnamDtlJt2JZ+UBfpq6YgZr45E6vs1D3/fmWY9cDyjaU7IMlvaPSbAwNyiYzAUmhb1hlIiSwZKTQlb7L2dFBpiz4ASvO97MF7uz/URqLyyLlEQahw69WPTrb0J64/S250T9nXyc/Pd2AXu+z9WrXCHlIUJafrc0XDg3nLtALjFwhroTW9eR2QrSbO3ut8y5YjwsR0LEZoG8cEKe8qzKRi/yw8ui766dwP/4jrViBHD6MVe+wDBgI4usBO/EjX2CbOM19flmja9pmeG3I/xPh50llrupUsXkSitnc8C72qcnN55NzyU5/gn6GX1OPwW8I+OgBcIoXly0CdC3ENxta9KrDYMdwGaoCxwprRs1N3GlgDM+a3kV8lQfbETmD2yog=
