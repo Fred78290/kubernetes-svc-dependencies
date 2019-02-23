@@ -16,8 +16,8 @@ jobs:
       services: docker
       install: true
       script:
-        - make -e REGISTRY=fred78290 -e TAG=dev container
         - sonar-scanner
+        - make -e REGISTRY=fred78290 -e TAG=dev container
     - stage: test
       services: docker
       install: true
