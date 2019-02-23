@@ -35,8 +35,8 @@ make-image:
 	    -t ${REGISTRY}/kubernetes-svc-dependencies${PROVIDER}:${TAG} .
 
 build-binary: clean deps
-	make -e GOOS=linux -e GOARCH=amd64 build
-	make -e GOOS=darwin -e GOARCH=amd64 build
+	$(ENVVAR) make -e BUILD_DATE=${BUILD_DATE} -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e GOOS=linux -e GOARCH=amd64 build
+	$(ENVVAR) make -e BUILD_DATE=${BUILD_DATE} -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e GOOS=darwin -e GOARCH=amd64 build
 
 test-unit: clean deps build
 	$(ENVVAR) go test --test.short -race ./... $(FLAGS) ${TAGS_FLAG}
@@ -57,7 +57,7 @@ docker-builder:
 build-in-docker: docker-builder
 	docker run --rm -v `pwd`:/gopath/src/github.com/Fred78290/kubernetes-svc-dependencies/ kubernetes-svc-dependencies-builder:latest bash \
 		-c 'cd /gopath/src/github.com/Fred78290/kubernetes-svc-dependencies \
-		&& BUILD_TAGS=${BUILD_TAGS} make -e BUILD_DATE=`date +%Y-%m-%dT%H:%M:%SZ` build-binary'
+		&& BUILD_TAGS=${BUILD_TAGS} make -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e BUILD_DATE=`date +%Y-%m-%dT%H:%M:%SZ` build-binary'
 
 release: build-in-docker execute-release
 	@echo "Full in-docker release ${TAG}${FOR_PROVIDER} completed"
@@ -66,10 +66,8 @@ container: clean build-in-docker make-image
 	@echo "Created in-docker image ${TAG}${FOR_PROVIDER}"
 
 test-in-docker: clean docker-builder
-	docker run -v `pwd`:/gopath/src/github.com/Fred78290/kubernetes-svc-dependencies/ \
-		kubernetes-svc-dependencies-builder:latest bash \
-		-c 'cd /gopath/src/github.com/Fred78290/kubernetes-svc-dependencies \
-		&& godep go test ./... ${TAGS_FLAG}'
+	docker run -v `pwd`:/gopath/src/github.com/Fred78290/kubernetes-svc-dependencies/ kubernetes-svc-dependencies-builder:latest \
+		bash -c 'cd /gopath/src/github.com/Fred78290/kubernetes-svc-dependencies && bash ./scripts/run-tests.sh'
 
 .PHONY: all deps build test-unit clean format execute-release dev-release docker-builder build-in-docker release generate
 
