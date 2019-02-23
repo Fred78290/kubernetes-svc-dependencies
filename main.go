@@ -66,15 +66,26 @@ func makeDependency(maxRetry int, depend string, ignoreError bool) *Dependency {
 		n := strings.Split(v[1], ":")
 
 		if len(n) > 1 {
-			return &Dependency{v[0], n[0], n[1], maxRetry}
+			return &Dependency{
+				_kind:      v[0],
+				_namespace: n[0],
+				_name:      n[1],
+				_retry:     maxRetry,
+			}
 		}
 
-		return &Dependency{v[0], namespace, n[1], maxRetry}
+		return &Dependency{
+			_kind:      v[0],
+			_namespace: namespace,
+			_name:      n[1],
+			_retry:     maxRetry,
+		}
 	}
 
-	if ignoreError == false {
+	if !ignoreError {
 		klog.Fatalf("Unable to parse dependency: %v", depend)
 	}
+
 	klog.Warningf("Unable to parse dependency: %v, ignoring", depend)
 
 	return nil
@@ -120,6 +131,110 @@ func (t *Dependency) podReady(pod *core.Pod, verbose bool) (bool, error) {
 	return numOfContainer == numOfReady && ready, nil
 }
 
+func (t *Dependency) isPoReady(client *clientset.Clientset, verbose bool) (bool, error) {
+	if pod, err := client.Core().Pods(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+		return false, err
+	} else if pod == nil {
+		return false, fmt.Errorf("The pod %v doesn't exists", t)
+	} else {
+		return t.podReady(pod, verbose)
+	}
+}
+
+func (t *Dependency) isDeploymentReady(client *clientset.Clientset, verbose bool) (bool, error) {
+	if deployment, err := client.Apps().Deployments(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+		return false, err
+	} else if deployment == nil {
+		return false, fmt.Errorf("The deployment %v doesn't exists", t)
+	} else {
+		return deployment.Status.Replicas == deployment.Status.ReadyReplicas, err
+	}
+}
+
+func (t *Dependency) isDaemonSetReady(client *clientset.Clientset, verbose bool) (bool, error) {
+	if daemonset, err := client.Apps().DaemonSets(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+		return false, err
+	} else if daemonset == nil {
+		return false, fmt.Errorf("The daemonset %v doesn't exists", t)
+	} else {
+		return daemonset.Status.NumberAvailable == daemonset.Status.NumberReady, nil
+	}
+}
+
+func (t *Dependency) isReplicaSetReady(client *clientset.Clientset, verbose bool) (bool, error) {
+	if replicaset, err := client.Apps().ReplicaSets(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+		return false, err
+	} else if replicaset == nil {
+		return false, fmt.Errorf("The replicaset %v doesn't exists", t)
+	} else {
+		return replicaset.Status.Replicas == replicaset.Status.ReadyReplicas, nil
+	}
+}
+
+func (t *Dependency) isReplicationControllerReady(client *clientset.Clientset, verbose bool) (bool, error) {
+	if replicationcontroller, err := client.Core().ReplicationControllers(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+		return false, err
+	} else if replicationcontroller == nil {
+		return false, fmt.Errorf("The replicationcontroller %v doesn't exists", t)
+	} else {
+		return replicationcontroller.Status.Replicas == replicationcontroller.Status.ReadyReplicas, nil
+	}
+}
+
+func (t *Dependency) isStatefulSetsReady(client *clientset.Clientset, verbose bool) (bool, error) {
+	if stateful, err := client.Apps().StatefulSets(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+		return false, err
+	} else if stateful == nil {
+		return false, fmt.Errorf("The stateful %v doesn't exists", t)
+	} else {
+		return stateful.Status.Replicas == stateful.Status.ReadyReplicas, nil
+	}
+}
+
+func (t *Dependency) isServiceReady(client *clientset.Clientset, verbose bool) (bool, error) {
+	var service *core.Service
+	var pods *core.PodList
+	var err error
+	var ready bool
+	var numOfReady int
+
+	if service, err = client.Core().Services(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+		return false, err
+	}
+
+	if service == nil {
+		return false, fmt.Errorf("The service %v doesn't exists", t)
+	}
+
+	set := labels.Set(service.Spec.Selector)
+
+	if pods, err = client.Core().Pods(t._namespace).List(metav1.ListOptions{LabelSelector: set.String()}); err != nil {
+		return false, err
+	}
+
+	for _, pod := range pods.Items {
+		if verbose {
+			klog.Infof("Check service %v, pod:%v status:%v", t, pod.Name, pod.Status.Phase)
+		}
+
+		if ready, err = t.podReady(&pod, verbose); err != nil {
+			return false, err
+		}
+
+		if ready {
+			numOfReady++
+
+			if verbose {
+				klog.Infof("Service %v, pod:%v is ready", t, pod.Name)
+			}
+		} else if verbose {
+			klog.Infof("Service %v, pod:%v not ready", t, pod.Name)
+		}
+	}
+
+	return numOfReady == len(pods.Items), nil
+}
+
 func (t *Dependency) ready(client *clientset.Clientset, verbose bool) (bool, error) {
 
 	if verbose {
@@ -130,102 +245,22 @@ func (t *Dependency) ready(client *clientset.Clientset, verbose bool) (bool, err
 		t._retry--
 	}
 
-	options := metav1.GetOptions{}
-
 	if t._retry > 0 {
-		if t._kind == "po" {
-
-			if pod, err := client.Core().Pods(t._namespace).Get(t._name, options); err != nil {
-				return false, err
-			} else if pod == nil {
-				return false, fmt.Errorf("The pod %v doesn't exists", t)
-			} else {
-				return t.podReady(pod, verbose)
-			}
-
-		} else if t._kind == "deploy" {
-
-			if deployment, err := client.Apps().Deployments(t._namespace).Get(t._name, options); err != nil {
-				return false, err
-			} else if deployment == nil {
-				return false, fmt.Errorf("The deployment %v doesn't exists", t)
-			} else {
-				return deployment.Status.Replicas == deployment.Status.ReadyReplicas, err
-			}
-
-		} else if t._kind == "ds" {
-
-			if daemonset, err := client.Apps().DaemonSets(t._namespace).Get(t._name, options); err != nil {
-				return false, err
-			} else if daemonset == nil {
-				return false, fmt.Errorf("The daemonset %v doesn't exists", t)
-			} else {
-				return daemonset.Status.NumberAvailable == daemonset.Status.NumberReady, nil
-			}
-
-		} else if t._kind == "rs" {
-
-			if replicaset, err := client.Apps().ReplicaSets(t._namespace).Get(t._name, options); err != nil {
-				return false, err
-			} else if replicaset == nil {
-				return false, fmt.Errorf("The replicaset %v doesn't exists", t)
-			} else {
-				return replicaset.Status.Replicas == replicaset.Status.ReadyReplicas, nil
-			}
-
-		} else if t._kind == "rc" {
-
-			if replicationcontroller, err := client.Core().ReplicationControllers(t._namespace).Get(t._name, options); err != nil {
-				return false, err
-			} else if replicationcontroller == nil {
-				return false, fmt.Errorf("The replicationcontroller %v doesn't exists", t)
-			} else {
-				return replicationcontroller.Status.Replicas == replicationcontroller.Status.ReadyReplicas, nil
-			}
-
-		} else if t._kind == "sts" {
-
-			if stateful, err := client.Apps().StatefulSets(t._namespace).Get(t._name, options); err != nil {
-				return false, err
-			} else if stateful == nil {
-				return false, fmt.Errorf("The stateful %v doesn't exists", t)
-			} else {
-				return stateful.Status.Replicas == stateful.Status.ReadyReplicas, nil
-			}
-
-		} else if t._kind == "svc" {
-			if service, err := client.Core().Services(t._namespace).Get(t._name, options); err != nil {
-				return false, err
-			} else if service == nil {
-				return false, fmt.Errorf("The service %v doesn't exists", t)
-			} else {
-				set := labels.Set(service.Spec.Selector)
-
-				if pods, err := client.Core().Pods(t._namespace).List(metav1.ListOptions{LabelSelector: set.String()}); err == nil {
-					numOfReady := 0
-					for _, pod := range pods.Items {
-						if verbose {
-							klog.Infof("Check service %v, pod:%v status:%v", t, pod.Name, pod.Status.Phase)
-						}
-						ready, err := t.podReady(&pod, verbose)
-
-						if err != nil {
-							return false, err
-						} else if ready {
-							numOfReady++
-							if verbose {
-								klog.Infof("Service %v, pod:%v is ready", t, pod.Name)
-							}
-						} else if verbose {
-							klog.Infof("Service %v, pod:%v not ready", t, pod.Name)
-						}
-					}
-
-					return numOfReady == len(pods.Items), nil
-				}
-
-				return false, err
-			}
+		switch t._kind {
+		case "po":
+			return t.isPoReady(client, verbose)
+		case "deploy":
+			return t.isDeploymentReady(client, verbose)
+		case "ds":
+			return t.isDaemonSetReady(client, verbose)
+		case "rs":
+			return t.isReplicaSetReady(client, verbose)
+		case "rc":
+			return t.isReplicationControllerReady(client, verbose)
+		case "sts":
+			return t.isStatefulSetsReady(client, verbose)
+		case "svc":
+			return t.isServiceReady(client, verbose)
 		}
 	}
 
@@ -299,10 +334,10 @@ func (t *DependencyList) ready(client *clientset.Clientset, ignoreError bool, ke
 				klog.Infof("%v dependency got an error:%v", depend, err)
 			}
 
-			if keepOnerror == false || depend.retry() <= 0 {
+			if !keepOnerror || depend.retry() <= 0 {
 				t.errdependencies = append(t.errdependencies, depend)
 
-				if ignoreError == false {
+				if !ignoreError {
 					return false, err
 				}
 			} else if verbose {
@@ -310,11 +345,11 @@ func (t *DependencyList) ready(client *clientset.Clientset, ignoreError bool, ke
 			}
 		} else if ready {
 			klog.Infof("The dependency %v is ready", depend.String())
-		} else if verbose {
-			klog.Infof("The dependency %v is not ready", depend.String())
-		}
+		} else {
+			if verbose {
+				klog.Infof("The dependency %v is not ready", depend.String())
+			}
 
-		if ready == false {
 			t.dependencies = append(t.dependencies, depend)
 		}
 	}
@@ -359,6 +394,9 @@ func mainExitCode(arguments []string) int {
 
 	var args Options
 	var maxRetry int
+	var cc *restclient.Config
+	var timeout time.Duration
+	var sleep time.Duration
 
 	args.MaxRetry = "always"
 	args.IgnoreError = false
@@ -373,43 +411,38 @@ func mainExitCode(arguments []string) int {
 		if err.(*flags.Error).Type == flags.ErrHelp {
 			return 0
 		}
-	}
-
-	if err != nil {
+	} else {
 		klog.Errorf("Failed %v", err)
 		return -1
 	}
 
-	cc, err := buildConfigFromEnvs(args.Apiserver, args.Kubeconfig)
-	if err != nil {
-		klog.Fatalf("Failed to make client: %v", err)
+	if cc, err = buildConfigFromEnvs(args.Apiserver, args.Kubeconfig); err != nil {
+		klog.Errorf("Failed to make client: %v", err)
+		return -1
 	}
+
 	client, err := clientset.NewForConfig(cc)
 
 	if err != nil {
-		klog.Fatalf("Failed to make client: %v", err)
+		klog.Errorf("Failed to make client: %v", err)
+		return -1
 	}
 
 	if args.MaxRetry == "always" {
 		maxRetry = MaxInt
 	} else if args.MaxRetry == "" {
 		maxRetry = 1
-	} else {
-		maxRetry, err = strconv.Atoi(args.MaxRetry)
-		if err != nil {
-			klog.Errorf("Unable to parse maxretry value:%v", args.MaxRetry)
-			return -1
-		}
+	} else if maxRetry, err = strconv.Atoi(args.MaxRetry); err != nil {
+		klog.Errorf("Unable to parse maxretry value:%v", args.MaxRetry)
+		return -1
 	}
 
-	timeout, err := time.ParseDuration(args.Timeout)
-	if err != nil {
+	if timeout, err = time.ParseDuration(args.Timeout); err != nil {
 		klog.Errorf("Unable to parse timeout value:%v", args.Timeout)
 		return -1
 	}
 
-	sleep, err := time.ParseDuration(args.Sleep)
-	if err != nil {
+	if sleep, err = time.ParseDuration(args.Sleep); err != nil {
 		klog.Errorf("Unable to parse sleep value:%v", args.Sleep)
 		return -1
 	}
@@ -418,8 +451,9 @@ func mainExitCode(arguments []string) int {
 	envNamespace := args.Namespace
 
 	if envNamespace != "" {
-		if _, err := client.Core().Namespaces().Get(envNamespace, metav1.GetOptions{}); err != nil {
-			klog.Fatalf("%s namespace doesn't exist: %v", envNamespace, err)
+		if _, err = client.Core().Namespaces().Get(envNamespace, metav1.GetOptions{}); err != nil {
+			klog.Errorf("%s namespace doesn't exist: %v", envNamespace, err)
+			return -1
 		}
 		namespace = envNamespace
 	}
@@ -434,7 +468,7 @@ func mainExitCode(arguments []string) int {
 	for t := time.Now(); time.Since(t) < timeout; time.Sleep(sleep) {
 		ready, err = dependencies.ready(client, args.IgnoreError, args.KeepOnError, args.Verbose)
 
-		if err != nil && args.IgnoreError == false {
+		if err != nil && !args.IgnoreError {
 			klog.Errorf("Failed to got ready: %v", err)
 			return -1
 		}
@@ -444,9 +478,8 @@ func mainExitCode(arguments []string) int {
 		}
 	}
 
-	if ready == false {
+	if !ready {
 		klog.Errorf("Failed to got ready dependencies: %v", dependencies.dependencies)
-
 		return -1
 	}
 
