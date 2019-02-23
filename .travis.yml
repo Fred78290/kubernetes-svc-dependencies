@@ -1,6 +1,8 @@
+# Use the newer Travis-CI build templates based on the
+# Debian Linux distribution "Xenial" release.
+os: linux
+dist: xenial
 language: minimal
-services:
-- docker
 addons:
   sonarcloud:
     organization: fred78290-github
