@@ -22,11 +22,11 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientset "k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog"
-	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 )
 
 var phVersion = "v0.0.0-unset"
@@ -102,7 +102,7 @@ func mainExitCode(arguments []string) int {
 	sleep := args.getSleepTime()
 
 	if args.Namespace != "" {
-		if _, err := client.Core().Namespaces().Get(args.Namespace, metav1.GetOptions{}); err != nil {
+		if _, err := client.CoreV1().Namespaces().Get(args.Namespace, metav1.GetOptions{}); err != nil {
 			klog.Errorf("%s namespace doesn't exist: %v", args.Namespace, err)
 			return -1
 		}

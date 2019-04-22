@@ -19,8 +19,8 @@ package main
 import (
 	"strings"
 
+	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
-	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 )
 
 // DependencyList contains all dependencies
