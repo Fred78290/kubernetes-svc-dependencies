@@ -14,6 +14,8 @@ This sample is helloworld waiting a ready mongodb instance before to start.
 
 * 1.13.3
     - This version is supported kubernetes v1.13.3
+* 1.15.0
+    - This version is supported kubernetes v1.15.0
 
 ### How to use? ###
 
