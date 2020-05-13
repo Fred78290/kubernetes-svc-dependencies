@@ -1,7 +1,7 @@
 all: build
 VERSION_MAJOR ?= 1
-VERSION_MINOR ?= 15
-VERSION_BUILD ?= 0
+VERSION_MINOR ?= 18
+VERSION_BUILD ?= 2
 VERSION ?= v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 DEB_VERSION ?= $(VERSION_MAJOR).$(VERSION_MINOR)-$(VERSION_BUILD)
 TAG?=v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
@@ -25,7 +25,7 @@ else
 endif
 
 deps:
-	govendor fetch -v +external +missing
+	go mod vendor
 
 build: 
 	$(ENVVAR) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-X main.phVersion=$(VERSION) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$(GOOS)-$(GOARCH) ${TAGS_FLAG}

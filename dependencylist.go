@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"strings"
 
 	clientset "k8s.io/client-go/kubernetes"
@@ -49,13 +50,13 @@ func (t *DependencyList) set(maxRetry int, depends []string, ignoreError bool) {
 	}
 }
 
-func (t *DependencyList) isValid(client *clientset.Clientset) {
+func (t *DependencyList) isValid(ctx context.Context, client *clientset.Clientset) {
 	for _, depend := range t.dependencies {
-		depend.isValid(client)
+		depend.isValid(ctx, client)
 	}
 }
 
-func (t *DependencyList) ready(client *clientset.Clientset, ignoreError bool, keepOnerror bool, verbose bool) (bool, error) {
+func (t *DependencyList) ready(ctx context.Context, client *clientset.Clientset, ignoreError bool, keepOnerror bool, verbose bool) (bool, error) {
 	dependencies := make([]*Dependency, len(t.dependencies))
 
 	copy(dependencies, t.dependencies)
@@ -64,7 +65,7 @@ func (t *DependencyList) ready(client *clientset.Clientset, ignoreError bool, ke
 	t.dependencies = []*Dependency{}
 
 	for _, depend := range dependencies {
-		ready, err := depend.ready(client, verbose)
+		ready, err := depend.ready(ctx, client, verbose)
 
 		if err != nil {
 			// Insure...

@@ -100,9 +100,12 @@ func mainExitCode(arguments []string) int {
 	maxRetry := args.getMaxRetry()
 	timeout := args.getTimeout()
 	sleep := args.getSleepTime()
+	ctx := NewContext(timeout)
+
+	defer ctx.Cancel()
 
 	if args.Namespace != "" {
-		if _, err := client.CoreV1().Namespaces().Get(args.Namespace, metav1.GetOptions{}); err != nil {
+		if _, err := client.CoreV1().Namespaces().Get(ctx, args.Namespace, metav1.GetOptions{}); err != nil {
 			klog.Errorf("%s namespace doesn't exist: %v", args.Namespace, err)
 			return -1
 		}
@@ -114,12 +117,12 @@ func mainExitCode(arguments []string) int {
 
 	var ready bool
 
-	dependencies.isValid(client)
+	dependencies.isValid(ctx, client)
 
 	// Look for endpoints associated with the Elasticsearch logging service.
 	// First wait for the service to become available.
 	for t := time.Now(); time.Since(t) < timeout; time.Sleep(sleep) {
-		ready, err = dependencies.ready(client, args.IgnoreError, args.KeepOnError, args.Verbose)
+		ready, err = dependencies.ready(ctx, client, args.IgnoreError, args.KeepOnError, args.Verbose)
 
 		if err != nil && !args.IgnoreError {
 			klog.Errorf("Failed to got ready: %v", err)

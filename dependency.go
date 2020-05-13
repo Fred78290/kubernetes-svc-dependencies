@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -71,7 +72,7 @@ func (t *Dependency) String() string {
 	return t._kind + "/" + t._namespace + ":" + t._name
 }
 
-func (t *Dependency) isValid(client *clientset.Clientset) {
+func (t *Dependency) isValid(ctx context.Context, client *clientset.Clientset) {
 
 	switch t._kind {
 	case "po", "deploy", "ds", "rc", "rs", "sts", "svc":
@@ -83,7 +84,7 @@ func (t *Dependency) isValid(client *clientset.Clientset) {
 		klog.Fatalf("Namespace not defined for dependency %v", t._name)
 	}
 
-	namespace, err := client.CoreV1().Namespaces().Get(t._namespace, metav1.GetOptions{})
+	namespace, err := client.CoreV1().Namespaces().Get(ctx, t._namespace, metav1.GetOptions{})
 
 	if err != nil || namespace == nil {
 		klog.Fatalf("Namespace %v doesn't exists", t._namespace)
@@ -107,8 +108,8 @@ func (t *Dependency) podReady(pod *core.Pod, verbose bool) (bool, error) {
 	return numOfContainer == numOfReady && ready, nil
 }
 
-func (t *Dependency) isPodReady(client *clientset.Clientset, verbose bool) (bool, error) {
-	if pod, err := client.CoreV1().Pods(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+func (t *Dependency) isPodReady(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
+	if pod, err := client.CoreV1().Pods(t._namespace).Get(ctx, t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	} else if pod == nil {
 		return false, fmt.Errorf("The pod %v doesn't exists", t)
@@ -117,8 +118,8 @@ func (t *Dependency) isPodReady(client *clientset.Clientset, verbose bool) (bool
 	}
 }
 
-func (t *Dependency) isDeploymentReady(client *clientset.Clientset, verbose bool) (bool, error) {
-	if deployment, err := client.AppsV1().Deployments(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+func (t *Dependency) isDeploymentReady(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
+	if deployment, err := client.AppsV1().Deployments(t._namespace).Get(ctx, t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	} else if deployment == nil {
 		return false, fmt.Errorf("The deployment %v doesn't exists", t)
@@ -127,8 +128,8 @@ func (t *Dependency) isDeploymentReady(client *clientset.Clientset, verbose bool
 	}
 }
 
-func (t *Dependency) isDaemonSetReady(client *clientset.Clientset, verbose bool) (bool, error) {
-	if daemonset, err := client.AppsV1().DaemonSets(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+func (t *Dependency) isDaemonSetReady(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
+	if daemonset, err := client.AppsV1().DaemonSets(t._namespace).Get(ctx, t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	} else if daemonset == nil {
 		return false, fmt.Errorf("The daemonset %v doesn't exists", t)
@@ -137,8 +138,8 @@ func (t *Dependency) isDaemonSetReady(client *clientset.Clientset, verbose bool)
 	}
 }
 
-func (t *Dependency) isReplicaSetReady(client *clientset.Clientset, verbose bool) (bool, error) {
-	if replicaset, err := client.AppsV1().ReplicaSets(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+func (t *Dependency) isReplicaSetReady(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
+	if replicaset, err := client.AppsV1().ReplicaSets(t._namespace).Get(ctx, t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	} else if replicaset == nil {
 		return false, fmt.Errorf("The replicaset %v doesn't exists", t)
@@ -147,8 +148,8 @@ func (t *Dependency) isReplicaSetReady(client *clientset.Clientset, verbose bool
 	}
 }
 
-func (t *Dependency) isReplicationControllerReady(client *clientset.Clientset, verbose bool) (bool, error) {
-	if replicationcontroller, err := client.CoreV1().ReplicationControllers(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+func (t *Dependency) isReplicationControllerReady(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
+	if replicationcontroller, err := client.CoreV1().ReplicationControllers(t._namespace).Get(ctx, t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	} else if replicationcontroller == nil {
 		return false, fmt.Errorf("The replicationcontroller %v doesn't exists", t)
@@ -157,8 +158,8 @@ func (t *Dependency) isReplicationControllerReady(client *clientset.Clientset, v
 	}
 }
 
-func (t *Dependency) isStatefulSetsReady(client *clientset.Clientset, verbose bool) (bool, error) {
-	if stateful, err := client.AppsV1().StatefulSets(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+func (t *Dependency) isStatefulSetsReady(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
+	if stateful, err := client.AppsV1().StatefulSets(t._namespace).Get(ctx, t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	} else if stateful == nil {
 		return false, fmt.Errorf("The stateful %v doesn't exists", t)
@@ -167,14 +168,14 @@ func (t *Dependency) isStatefulSetsReady(client *clientset.Clientset, verbose bo
 	}
 }
 
-func (t *Dependency) isServiceReady(client *clientset.Clientset, verbose bool) (bool, error) {
+func (t *Dependency) isServiceReady(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
 	var service *core.Service
 	var pods *core.PodList
 	var err error
 	var ready bool
 	var numOfReady int
 
-	if service, err = client.CoreV1().Services(t._namespace).Get(t._name, metav1.GetOptions{}); err != nil {
+	if service, err = client.CoreV1().Services(t._namespace).Get(ctx, t._name, metav1.GetOptions{}); err != nil {
 		return false, err
 	}
 
@@ -184,7 +185,7 @@ func (t *Dependency) isServiceReady(client *clientset.Clientset, verbose bool) (
 
 	set := labels.Set(service.Spec.Selector)
 
-	if pods, err = client.CoreV1().Pods(t._namespace).List(metav1.ListOptions{LabelSelector: set.String()}); err != nil {
+	if pods, err = client.CoreV1().Pods(t._namespace).List(ctx, metav1.ListOptions{LabelSelector: set.String()}); err != nil {
 		return false, err
 	}
 
@@ -211,7 +212,7 @@ func (t *Dependency) isServiceReady(client *clientset.Clientset, verbose bool) (
 	return numOfReady == len(pods.Items), nil
 }
 
-func (t *Dependency) ready(client *clientset.Clientset, verbose bool) (bool, error) {
+func (t *Dependency) ready(ctx context.Context, client *clientset.Clientset, verbose bool) (bool, error) {
 
 	if verbose {
 		klog.Infof("Check if %v dependency is ready, retry:%d", t.String(), t._retry)
@@ -224,19 +225,19 @@ func (t *Dependency) ready(client *clientset.Clientset, verbose bool) (bool, err
 	if t._retry > 0 {
 		switch t._kind {
 		case "po":
-			return t.isPodReady(client, verbose)
+			return t.isPodReady(ctx, client, verbose)
 		case "deploy":
-			return t.isDeploymentReady(client, verbose)
+			return t.isDeploymentReady(ctx, client, verbose)
 		case "ds":
-			return t.isDaemonSetReady(client, verbose)
+			return t.isDaemonSetReady(ctx, client, verbose)
 		case "rs":
-			return t.isReplicaSetReady(client, verbose)
+			return t.isReplicaSetReady(ctx, client, verbose)
 		case "rc":
-			return t.isReplicationControllerReady(client, verbose)
+			return t.isReplicationControllerReady(ctx, client, verbose)
 		case "sts":
-			return t.isStatefulSetsReady(client, verbose)
+			return t.isStatefulSetsReady(ctx, client, verbose)
 		case "svc":
-			return t.isServiceReady(client, verbose)
+			return t.isServiceReady(ctx, client, verbose)
 		}
 	}
 
