@@ -2,9 +2,8 @@ all: build
 VERSION_MAJOR ?= 1
 VERSION_MINOR ?= 18
 VERSION_BUILD ?= 2
-VERSION ?= v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 DEB_VERSION ?= $(VERSION_MAJOR).$(VERSION_MINOR)-$(VERSION_BUILD)
-TAG?=v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
+TAG ?= v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 FLAGS=
 ENVVAR=
 GOOS?=linux
@@ -12,7 +11,7 @@ GOARCH?=amd64
 REGISTRY?=fred78290
 BASEIMAGE?=k8s.gcr.io/debian-base-amd64:v1.0.0
 BUILD_DATE?=`date +%Y-%m-%dT%H:%M:%SZ`
-VERSION_LDFLAGS=-X main.phVersion=$(VERSION)
+VERSION_LDFLAGS=-X main.phVersion=$(TAG)
 
 ifdef BUILD_TAGS
   TAGS_FLAG=--tags ${BUILD_TAGS}
@@ -28,7 +27,7 @@ deps:
 	go mod vendor
 
 build: 
-	$(ENVVAR) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-X main.phVersion=$(VERSION) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$(GOOS)-$(GOARCH) ${TAGS_FLAG}
+	$(ENVVAR) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$(GOOS)-$(GOARCH) ${TAGS_FLAG}
 
 make-image:
 	docker build --pull --build-arg BASEIMAGE=${BASEIMAGE} \
