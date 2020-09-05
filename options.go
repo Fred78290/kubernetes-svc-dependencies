@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/klog"
+	klog "k8s.io/klog/v2"
 )
 
 // Options arguments

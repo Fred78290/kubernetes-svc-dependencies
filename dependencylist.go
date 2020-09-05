@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	clientset "k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
+	klog "k8s.io/klog/v2"
 )
 
 // DependencyList contains all dependencies
