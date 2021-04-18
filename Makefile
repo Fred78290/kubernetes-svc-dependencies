@@ -1,18 +1,18 @@
-all: build
+ALL_ARCH = amd64 arm64
+
+all: $(addprefix build-arch-,$(ALL_ARCH))
+
 VERSION_MAJOR ?= 1
-VERSION_MINOR ?= 19
-VERSION_BUILD ?= 0
-VERSION ?= v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
-DEB_VERSION ?= $(VERSION_MAJOR).$(VERSION_MINOR)-$(VERSION_BUILD)
+VERSION_MINOR ?= 20
+VERSION_BUILD ?= 5
 TAG?=v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 FLAGS=
 ENVVAR=
 GOOS?=linux
-GOARCH?=amd64
+GOARCH?=$(shell go env GOARCH)
 REGISTRY?=fred78290
-BASEIMAGE?=k8s.gcr.io/debian-base-amd64:v1.0.0
 BUILD_DATE?=`date +%Y-%m-%dT%H:%M:%SZ`
-VERSION_LDFLAGS=-X main.phVersion=$(VERSION)
+VERSION_LDFLAGS=-X main.phVersion=$(TAG)
 
 ifdef BUILD_TAGS
   TAGS_FLAG=--tags ${BUILD_TAGS}
@@ -24,28 +24,55 @@ else
   FOR_PROVIDER=
 endif
 
+IMAGE=$(REGISTRY)/kubernetes-svc-dependencies$(PROVIDER)
+
 deps:
 	go mod vendor
 
-build: 
-	$(ENVVAR) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-X main.phVersion=$(VERSION) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$(GOOS)-$(GOARCH) ${TAGS_FLAG}
+build: build-arch-$(GOARCH)
 
-make-image:
+build-arch-%: deps clean-arch-%
+	$(ENVVAR) GOOS=$(GOOS) GOARCH=$* go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$* ${TAGS_FLAG}
+
+test-unit: clean build
+	go test --test.short -race ./... ${TAGS_FLAG}
+
+dev-release: $(addprefix dev-release-arch-,$(ALL_ARCH)) push-manifest
+
+dev-release-arch-%: build-arch-% make-image-arch-% push-image-arch-%
+	@echo "Release ${TAG}${FOR_PROVIDER}-$* completed"
+
+make-image: make-image-arch-$(GOARCH)
+
+make-image-arch-%:
+ifdef BASEIMAGE
 	docker build --pull --build-arg BASEIMAGE=${BASEIMAGE} \
-	    -t ${REGISTRY}/kubernetes-svc-dependencies${PROVIDER}:${TAG} .
+		-t ${IMAGE}-$*:${TAG} \
+		-f Dockerfile.$* .
+else
+	docker build --pull \
+		-t ${IMAGE}-$*:${TAG} \
+		-f Dockerfile.$* .
+endif
+	@echo "Image ${TAG}${FOR_PROVIDER}-$* completed"
 
-build-binary: clean deps
-	$(ENVVAR) make -e BUILD_DATE=${BUILD_DATE} -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e GOOS=linux -e GOARCH=amd64 build
-	$(ENVVAR) make -e BUILD_DATE=${BUILD_DATE} -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e GOOS=darwin -e GOARCH=amd64 build
+push-image: push-image-arch-$(GOARCH)
 
-test-unit: clean deps build
-	$(ENVVAR) go test --test.short -race ./... $(FLAGS) ${TAGS_FLAG}
+push-image-arch-%:
+	./push_image.sh ${IMAGE}-$*:${TAG}
 
-dev-release: build-binary execute-release
+push-manifest:
+	docker manifest create ${IMAGE}:${TAG} \
+	    $(addprefix $(REGISTRY)/kubernetes-svc-dependencies$(PROVIDER)-, $(addsuffix :$(TAG), $(ALL_ARCH)))
+	docker manifest push --purge ${IMAGE}:${TAG}
+
+execute-release: $(addprefix make-image-arch-,$(ALL_ARCH)) $(addprefix push-image-arch-,$(ALL_ARCH)) push-manifest
 	@echo "Release ${TAG}${FOR_PROVIDER} completed"
 
-clean:
-#	sudo rm -rf out
+clean: clean-arch-$(GOARCH)
+
+clean-arch-%:
+	rm -f ./out/kubernetes-svc-dependencies$(PROVIDER)-$*
 
 format:
 	test -z "$$(find . -path ./vendor -prune -type f -o -name '*.go' -exec gofmt -s -d {} + | tee /dev/stderr)" || \
@@ -54,20 +81,25 @@ format:
 docker-builder:
 	docker build -t kubernetes-svc-dependencies-builder ./builder
 
-build-in-docker: docker-builder
+build-in-docker: build-in-docker-arch-$(GOARCH)
+
+build-in-docker-arch-%: clean-arch-% docker-builder
 	docker run --rm -v `pwd`:/gopath/src/github.com/Fred78290/kubernetes-svc-dependencies/ kubernetes-svc-dependencies-builder:latest bash \
 		-c 'cd /gopath/src/github.com/Fred78290/kubernetes-svc-dependencies \
-		&& BUILD_TAGS=${BUILD_TAGS} make -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e BUILD_DATE=`date +%Y-%m-%dT%H:%M:%SZ` build-binary'
+		&& BUILD_TAGS=${BUILD_TAGS} make -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e BUILD_DATE=`date +%Y-%m-%dT%H:%M:%SZ` build-arch-$*'
 
-release: build-in-docker execute-release
+release: $(addprefix build-in-docker-arch-,$(ALL_ARCH)) execute-release
 	@echo "Full in-docker release ${TAG}${FOR_PROVIDER} completed"
 
-container: clean build-in-docker make-image
-	@echo "Created in-docker image ${TAG}${FOR_PROVIDER}"
+#container: container-arch-$(GOARCH)
+container: $(addprefix container-arch-,$(ALL_ARCH))
+
+container-arch-%: build-in-docker-arch-% make-image-arch-%
+	@echo "Full in-docker image ${TAG}${FOR_PROVIDER}-$* completed"
 
 test-in-docker: clean docker-builder
 	docker run -v `pwd`:/gopath/src/github.com/Fred78290/kubernetes-svc-dependencies/ kubernetes-svc-dependencies-builder:latest \
 		bash -c 'cd /gopath/src/github.com/Fred78290/kubernetes-svc-dependencies && bash ./scripts/run-tests.sh'
 
-.PHONY: all deps build test-unit clean format execute-release dev-release docker-builder build-in-docker release generate
+.PHONY: all build test-unit clean format execute-release dev-release docker-builder build-in-docker release generate push-image push-manifest
 

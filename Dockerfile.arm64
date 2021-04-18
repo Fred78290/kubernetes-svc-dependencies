@@ -11,14 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ARG BASEIMAGE=k8s.gcr.io/debian-base-amd64:v1.0.0
+ARG BASEIMAGE=gcr.io/distroless/static:latest-arm64
 FROM $BASEIMAGE
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
-ENV DEBIAN_FRONTEND noninteractive
-RUN clean-install ca-certificates tzdata;
-
-ADD out/kubernetes-svc-dependencies-linux-amd64 /usr/local/bin/check-dependencies
+ADD out/kubernetes-svc-dependencies-arm64 /usr/local/bin/check-dependencies
 
 USER root
 CMD ["/usr/local/bin/check-dependencies"]
