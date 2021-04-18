@@ -1,3 +1,7 @@
 #!/bin/sh
+sudo rm -rf out
 
-make -e REGISTRY=fred78290 -e TAG=v1.18.2 container
+VERSION=v1.20.5
+REGISTRY=devregistry.aldunelabs.com
+
+make -e REGISTRY=$REGISTRY -e TAG=$VERSION container

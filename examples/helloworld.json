@@ -28,7 +28,7 @@
                 "schedulerName": "default-scheduler",
                 "initContainers": [
                     {
-                        "image": "fred78290/kubernetes-svc-dependencies:v1.13.3",
+                        "image": "fred78290/kubernetes-svc-dependencies:v1.19.0",
                         "command": [
                             "/usr/local/bin/check-dependencies"
                         ],
