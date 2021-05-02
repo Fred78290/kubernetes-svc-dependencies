@@ -15,7 +15,7 @@ ARG BASEIMAGE=gcr.io/distroless/static:latest-arm64
 FROM $BASEIMAGE
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
-ADD out/kubernetes-svc-dependencies-arm64 /usr/local/bin/check-dependencies
+ADD out/linux/arm64/kubernetes-svc-dependencies /usr/local/bin/check-dependencies
 
 USER root
 CMD ["/usr/local/bin/check-dependencies"]

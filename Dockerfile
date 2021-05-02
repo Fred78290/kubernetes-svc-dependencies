@@ -1,4 +1,4 @@
-# Copyright 2017 The Kubernetes Authors.
+# Copyright 2019 Frederic Boltz Author. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ARG BASEIMAGE=gcr.io/distroless/static:latest-amd64
-FROM $BASEIMAGE
+
+#ARG BASEIMAGE=gcr.io/distroless/static:latest-amd64
+FROM alpine AS builder
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
+COPY out .
+RUN ls / ; mv /$TARGETPLATFORM/kubernetes-svc-dependencies /kubernetes-svc-dependencies
+
+FROM ubuntu:focal
+
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
-ADD out/linux/amd64/kubernetes-svc-dependencies /usr/local/bin/check-dependencies
+COPY --from=builder /kubernetes-svc-dependencies /usr/local/bin/check-dependencies
 
-USER root
+EXPOSE 5200
+
 CMD ["/usr/local/bin/check-dependencies"]

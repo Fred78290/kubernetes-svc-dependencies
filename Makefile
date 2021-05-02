@@ -32,7 +32,7 @@ deps:
 build: build-arch-$(GOARCH)
 
 build-arch-%: deps clean-arch-%
-	$(ENVVAR) GOOS=$(GOOS) GOARCH=$* go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/kubernetes-svc-dependencies-$* ${TAGS_FLAG}
+	$(ENVVAR) GOOS=$(GOOS) GOARCH=$* go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/$(GOOS)/$*/kubernetes-svc-dependencies ${TAGS_FLAG}
 
 test-unit: clean build
 	go test --test.short -race ./... ${TAGS_FLAG}
@@ -59,20 +59,19 @@ endif
 push-image: push-image-arch-$(GOARCH)
 
 push-image-arch-%:
-	./push_image.sh ${IMAGE}-$*:${TAG}
+	docker push ${IMAGE}-$*:${TAG}
 
 push-manifest:
-	docker manifest create ${IMAGE}:${TAG} \
-	    $(addprefix $(REGISTRY)/kubernetes-svc-dependencies$(PROVIDER)-, $(addsuffix :$(TAG), $(ALL_ARCH)))
-	docker manifest push --purge ${IMAGE}:${TAG}
+	docker buildx build --pull --platform linux/amd64,linux/arm64 --push -t ${IMAGE}:${TAG} .
+	@echo "Image ${TAG}* completed"
 
 execute-release: $(addprefix make-image-arch-,$(ALL_ARCH)) $(addprefix push-image-arch-,$(ALL_ARCH)) push-manifest
 	@echo "Release ${TAG}${FOR_PROVIDER} completed"
 
-clean: clean-arch-$(GOARCH)
+clean: $(addprefix clean-arch-,$(ALL_ARCH))
 
 clean-arch-%:
-	rm -f ./out/kubernetes-svc-dependencies$(PROVIDER)-$*
+	rm -f ./out/$(GOOS)/$*/kubernetes-svc-dependencies
 
 format:
 	test -z "$$(find . -path ./vendor -prune -type f -o -name '*.go' -exec gofmt -s -d {} + | tee /dev/stderr)" || \
