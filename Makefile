@@ -80,7 +80,7 @@ format:
 docker-builder:
 	docker build -t kubernetes-svc-dependencies-builder ./builder
 
-build-in-docker: build-in-docker-arch-$(GOARCH)
+build-in-docker: $(addprefix build-in-docker-arch-,$(ALL_ARCH))
 
 build-in-docker-arch-%: clean-arch-% docker-builder
 	docker run --rm -v `pwd`:/gopath/src/github.com/Fred78290/kubernetes-svc-dependencies/ kubernetes-svc-dependencies-builder:latest bash \
