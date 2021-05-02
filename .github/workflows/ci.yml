@@ -1,4 +1,4 @@
-name: test-go-github-action
+name: kubernetes-svc-dependencies
 on:
   push:
     branches:
@@ -116,8 +116,8 @@ jobs:
       - name: Prepare Release
         shell: bash
         run: |
-          cp out/linux/amd64/test-go-github-action release/test-go-github-action-amd64;
-          cp out/linux/arm64/test-go-github-action release/test-go-github-action-arm64
+          cp out/linux/amd64/kubernetes-svc-dependencies release/kubernetes-svc-dependencies-amd64;
+          cp out/linux/arm64/kubernetes-svc-dependencies release/kubernetes-svc-dependencies-arm64
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -125,7 +125,7 @@ jobs:
         #  release_name: Release ${{ steps.prep.outputs.tag }}
           draft: false
           files: |
-            release/test-go-github-action-amd64
-            release/test-go-github-action-arm64
+            release/kubernetes-svc-dependencies-amd64
+            release/kubernetes-svc-dependencies-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # You don't need to add this in secrets it's by default.      
