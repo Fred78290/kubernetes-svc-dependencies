@@ -1,4 +1,4 @@
-name: test-go-github-action
+name: kubernetes-svc-dependencies
 on:
   push:
     branches:
