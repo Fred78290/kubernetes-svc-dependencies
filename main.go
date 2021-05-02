@@ -88,6 +88,7 @@ func mainExitCode(arguments []string) int {
 
 	if err != nil {
 		klog.Errorf("Failed to make client: %v", err)
+		return -1
 	}
 
 	client, err := clientset.NewForConfig(cc)

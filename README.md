@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/Fred78290/kubernetes-svc-dependencies.svg?branch=release-1.20)](https://travis-ci.org/Fred78290/kubernetes-svc-dependencies) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Fred78290_kubernetes-svc-dependencies&metric=alert_status)](https://sonarcloud.io/dashboard?id=Fred78290_kubernetes-svc-dependencies) [![Licence](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/Fred78290/kubernetes-svc-dependencies/blob/master/LICENSE)
+[![Build Status](https://github.com/fred78290/kubernetes-svc-dependencies/actions/workflows/ci.yml/badge.svg)](https://github.com/Fred78290/kubernetes-svc-dependencies/actions)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Fred78290_kubernetes-svc-dependencies&metric=alert_status)](https://sonarcloud.io/dashboard?id=Fred78290_kubernetes-svc-dependencies)
+[![Licence](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/Fred78290/kubernetes-svc-dependencies/blob/master/LICENSE)
 
 # Kubernetes service dependencies ready checker #
 
@@ -12,18 +14,21 @@ This sample is helloworld waiting a ready mongodb instance before to start.
 
 ### Releases ###
 
-* 1.13.3
+* 1.13.3 (unmaintened)
     - This version is supported kubernetes v1.13.3
-* 1.15.0
+* 1.15.0 (unmaintened)
     - This version is supported kubernetes v1.15.0
-* 1.16
+* 1.16 (unmaintened)
     - This version is supported kubernetes v1.15
-* 1.17.5
+* 1.17.5 (unmaintened)
     - This version is supported kubernetes v1.17
-* 1.18.2
+* 1.18.2 (unmaintened)
     - This version is supported kubernetes v1.18
 * 1.20.5
     - This version is supported kubernetes v1.20
+* 1.21.0
+    - This version is supported kubernetes v1.21
+
 
 ### How to use? ###
 
