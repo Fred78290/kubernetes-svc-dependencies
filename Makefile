@@ -65,7 +65,7 @@ push-manifest:
 	docker buildx build --pull --platform linux/amd64,linux/arm64 --push -t ${IMAGE}:${TAG} .
 	@echo "Image ${TAG}* completed"
 
-execute-release: $(addprefix make-image-arch-,$(ALL_ARCH)) $(addprefix push-image-arch-,$(ALL_ARCH)) push-manifest
+execute-release: $(addprefix make-image-arch-,$(ALL_ARCH)) $(addprefix push-image-arch-,$(ALL_ARCH))
 	@echo "Release ${TAG}${FOR_PROVIDER} completed"
 
 clean: $(addprefix clean-arch-,$(ALL_ARCH))
