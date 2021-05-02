@@ -42,8 +42,7 @@ jobs:
       - name: Build binary
         shell: bash
         run:
-          echo "Build with tag:${{ steps.prep.outputs.tag }}";
-          make -e REGISTRY=$REGISTRY -e TAG="${{ steps.prep.outputs.tag }}" container;
+          make -e REGISTRY=$REGISTRY -e TAG="${{ steps.prep.outputs.tag }}" build-in-docker
       # Directory created with a docker run having user root
       - name: Fix directory owner
         shell: bash
