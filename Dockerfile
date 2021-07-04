@@ -20,7 +20,7 @@ ARG BUILDPLATFORM
 COPY out .
 RUN ls / ; mv /$TARGETPLATFORM/kubernetes-svc-dependencies /kubernetes-svc-dependencies
 
-FROM ubuntu:groovy-20210416
+FROM ubuntu:20.10
 
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
