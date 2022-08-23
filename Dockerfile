@@ -20,7 +20,7 @@ ARG BUILDPLATFORM
 COPY out .
 RUN mv /$TARGETPLATFORM/kubernetes-svc-dependencies /kubernetes-svc-dependencies ; chmod +x /kubernetes-svc-dependencies
 
-FROM ubuntu:20.10
+FROM ubuntu:20.04
 
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
