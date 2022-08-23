@@ -116,7 +116,7 @@ jobs:
       - name: Prepare Release
         shell: bash
         run: |
-          cp out/linux/amd64/kubernetes-svc-dependencies kubernetes-svc-dependencies-amd64;
+          cp out/linux/amd64/kubernetes-svc-dependencies kubernetes-svc-dependencies-amd64
           cp out/linux/arm64/kubernetes-svc-dependencies kubernetes-svc-dependencies-arm64
       - name: Release
         uses: softprops/action-gh-release@v1
