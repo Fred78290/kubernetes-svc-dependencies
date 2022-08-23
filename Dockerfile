@@ -18,7 +18,7 @@ ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
 COPY out .
-RUN ls / ; mv /$TARGETPLATFORM/kubernetes-svc-dependencies /kubernetes-svc-dependencies
+RUN mv /$TARGETPLATFORM/kubernetes-svc-dependencies /kubernetes-svc-dependencies ; chmod +x /kubernetes-svc-dependencies
 
 FROM ubuntu:20.10
 
